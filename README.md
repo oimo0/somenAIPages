@@ -17,7 +17,7 @@
 `config.js` のURLを、Cloudflare TunnelなどでHTTPS公開したAPI URLへ合わせます。
 
 ```js
-window.SOMENAI_API_BASE = 'https://api.somenai.asro.jp';
+window.SOMENAI_API_BASE = 'https://somenapi.asro.jp';
 ```
 
 サーバー側の `.env` は次のように設定します。GitHub Pagesのパス `/somenAIPages/` はoriginに含めません。
@@ -36,3 +36,5 @@ FRONTEND_ORIGIN=https://oimo0.github.io
 - Web検索・SchoolLink・計算中の状態表示と参照元カード
 - Markdown表、コード、引用、簡易グラフ、生成画像の表示
 - Cloudflare AI画像生成モード
+
+テーマ色は設定から5色を選択でき、端末に保存します。iPad縦画面とSplit Viewではサイドバーが引き出し式になります。VisualViewportに合わせて入力欄を配置し、画面キーボード表示時も会話部分をスクロールできます。入力文字の青い枠はなくし、入力欄全体の控えめな境界変化に置き換えています。
