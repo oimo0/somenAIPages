@@ -27,3 +27,12 @@ FRONTEND_ORIGIN=https://oimo0.github.io
 ```
 
 ブラウザーにはログイン用トークンだけを保存します。Gemini APIキーとGroq APIキーはサーバー側だけに置き、このリポジトリには入れません。
+
+## 画面と機能
+
+- ChatGPT風のシンプルなレスポンシブUI
+- 低・中・高のモデル切り替えとモデル別残り回数
+- 学習モード、Web検索（自動・常時・OFF）の設定
+- Web検索・SchoolLink・計算中の状態表示と参照元カード
+- Markdown表、コード、引用、簡易グラフ、生成画像の表示
+- Cloudflare AI画像生成モード
