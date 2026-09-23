@@ -28,3 +28,12 @@ body:not(.dark) .orb{display:none}
 .asset-holder:has(.attachment-image){display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:8px}
 .attachment-image{display:block;width:96px;height:96px;object-fit:cover;border-radius:14px;border:1px solid var(--line)}
 .asset-holder:has(.attachment-image) a{font-size:11px;padding:0;margin:0;border:0;color:var(--muted)}
+
+/* Show search progress as a gentle character wave. */
+#toolStatus.search-wave{display:flex;align-items:center;gap:2px;width:min(750px,100%);min-height:24px;color:var(--muted);animation:none;font-size:12px;font-weight:600}
+#toolStatus.search-wave .search-icon{font-size:17px;margin-right:5px}
+#toolStatus.search-wave .search-letter{display:inline-block;animation:search-wave 1.15s ease-in-out infinite}
+#toolStatus.search-wave .search-letter:nth-child(3){animation-delay:.13s}
+#toolStatus.search-wave .search-letter:nth-child(4){animation-delay:.26s}
+@keyframes search-wave{0%,60%,100%{transform:translateY(0);opacity:.65}30%{transform:translateY(-4px);opacity:1}}
+@media(prefers-reduced-motion:reduce){#toolStatus.search-wave .search-letter{animation:none;opacity:1}}
