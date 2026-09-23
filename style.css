@@ -36,3 +36,8 @@ body:not(.dark) .orb{display:none}
 #sidebarUsage>small{display:block;margin-top:2px;font-size:11px}
 .dark #sidebarUsage .usage-meter{background:#343943}
 @media(max-height:650px){#sidebarUsage .usage-row{margin-bottom:9px;row-gap:4px}}
+
+/* Labels are plain text; only the meter fill carries the tier color. */
+#sidebarUsage .usage-row,#sidebarUsage .usage-row>span:not(.usage-meter-fill),#sidebarUsage .usage-row>b{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+#sidebarUsage .usage-row>span:not(.usage-meter-fill),#sidebarUsage .usage-row>b{color:var(--text)}
+#sidebarUsage .usage-row>b{color:var(--muted)}
