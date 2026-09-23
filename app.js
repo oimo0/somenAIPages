@@ -78,15 +78,16 @@ $('#authForm').onsubmit=async e=>{
  try{const u=await api(register?'/register':'/login','POST',{name:$('#name').value,password:$('#password').value,grant:registrationGrant});authToken=u.token;localStorage.setItem('somenai-token',authToken);registrationGrant='';stopScanner();$('#auth').close();$('#password').value='';authScreen(false);await loadUser();}
  catch(e){$('#authError').textContent=e.message;}finally{$('#authSubmit').disabled=false;}
 };
-async function loadUser(){const [u,c,s,use]=await Promise.all([api('/me'),api('/chats'),api('/settings'),api('/usage')]);chats=c;settings=s;applyAppearance(s.appearance||{});usageState=use;$('#username').textContent=u.name;$('#avatar').textContent=u.name.slice(0,1).toUpperCase();renderHistory();renderUsage();}
+async function loadUser(){const [u,c,s,use]=await Promise.all([api('/me'),api('/chats'),api('/settings'),api('/usage')]);chats=c;settings=s;applyAppearance(s.appearance||{});usageState=use;$('#username').textContent=u.name;$('#avatar').textContent=u.name.slice(0,1).toUpperCase();renderHistory();renderUsage();void resumeImageJob();}
 async function init(){updateModel();try{if(!API_BASE.startsWith('https://'))throw new Error('API接続先をconfig.jsに設定してください。');config=await api('/config');$('#authToggle').hidden=!config.registration;const tools=[['🔎 Web検索',config.tools.web],['🏫 SchoolLink',config.tools.schoolLink],['🎨 画像生成',config.tools.image],['🧮 計算','ready']];$('#toolReadiness').replaceChildren(...tools.map(([name,ready])=>{const d=document.createElement('div');d.className='tool-item';const a=document.createElement('span'),b=document.createElement('span');a.textContent=name;b.className=ready?'ready':'pending';b.textContent=ready?'利用可能':'未設定';d.append(a,b);return d;}));const inviteURL=location.href;if(new URLSearchParams(location.hash.slice(1)).has('invite')){history.replaceState(null,'',location.pathname+location.search);authScreen(true);$('#auth').showModal();try{await acceptInvite(inviteURL);}catch(e){$('#qrStatus').textContent=e.message;}render();return;}if(authToken){try{await loadUser();}catch{if(!$('#auth').open)$('#auth').showModal();}}else $('#auth').showModal();render();}catch(e){notice(e.message);}}
 
 let pendingAssets=[];
-function updateAttachmentNotice(){if(!pendingAssets.length){if($('#notice').textContent.startsWith('添付を保存しました。'))notice('');return;}const hasPdf=pendingAssets.some(a=>a.mime==='application/pdf');if(quality==='high'){if($('#notice').textContent.startsWith('添付を保存しました。'))notice('');return;}notice(hasPdf?'添付を保存しました。PDFは精度「高」で読み取れます。':quality==='normal'?'添付を保存しました。精度「中」で画像を読み取れます（最大3枚）。':'添付を保存しました。画像は精度「中」または「高」で読み取れます。');}
+function updateAttachmentNotice(){if(!pendingAssets.length||quality==='high'){notice('');return;}const hasPdf=pendingAssets.some(a=>a.mime==='application/pdf');notice(hasPdf?'PDFを読み取るには「高」を選択してください。':quality==='normal'?'「中」で画像を読み取れます（最大3枚）。':'画像を読み取るには「中」または「高」を選択してください。');}
 
-function renderPending(){const box=$('#pendingFiles');box.hidden=!pendingAssets.length;box.replaceChildren(...pendingAssets.map(a=>{const b=document.createElement('button');b.textContent=a.name+' ×';b.onclick=()=>{if(busy)return;pendingAssets=pendingAssets.filter(x=>x.id!==a.id);renderPending();updateAttachmentNotice();};return b;}));}
+function renderPending(){const box=$('#pendingFiles');box.hidden=!pendingAssets.length;box.replaceChildren(...pendingAssets.map(a=>{const tile=document.createElement('div');tile.className='pending-tile';tile.title=a.name;if(a.mime.startsWith('image/')){const img=document.createElement('img');img.alt=a.name;tile.append(img);loadThumbnail(a,img);}else{const icon=document.createElement('span');icon.className='pending-pdf';icon.textContent='PDF';tile.append(icon);}const remove=document.createElement('button');remove.type='button';remove.className='pending-remove';remove.textContent='×';remove.setAttribute('aria-label',a.name+'を外す');remove.onclick=()=>{if(busy)return;pendingAssets=pendingAssets.filter(x=>x.id!==a.id);renderPending();updateAttachmentNotice();};tile.append(remove);return tile;}));}
+async function loadThumbnail(asset,img){try{const r=await fetch(API_BASE+'/api/media/'+asset.id,{headers:{Authorization:'Bearer '+authToken}});if(!r.ok)throw Error();const blob=await r.blob(),url=URL.createObjectURL(blob);img.onload=()=>URL.revokeObjectURL(url);img.onerror=()=>URL.revokeObjectURL(url);img.src=url;}catch{img.alt='画像を読み込めませんでした';}}
 async function loadMedia(asset,holder){
- try{const r=await fetch(API_BASE+'/api/media/'+asset.id,{headers:{Authorization:'Bearer '+authToken}});if(!r.ok)throw Error('ファイルを取得できません');const blob=await r.blob(),url=URL.createObjectURL(blob);const el=document.createElement(asset.mime.startsWith('image/')?'img':'a');if(el.tagName==='IMG'){el.src=url;el.alt=asset.name;el.className='generated-image';const link=document.createElement('a');link.href=url;link.download=asset.name;link.textContent='画像を保存';holder.replaceChildren(el,link);return;}else{el.href=url;el.download=asset.name;el.textContent='↓ '+asset.name;el.addEventListener('click',()=>setTimeout(()=>URL.revokeObjectURL(url),1000),{once:true});}holder.replaceChildren(el);}catch{holder.textContent='ファイルを読み込めませんでした';}
+ try{const r=await fetch(API_BASE+'/api/media/'+asset.id,{headers:{Authorization:'Bearer '+authToken}});if(!r.ok)throw Error('ファイルを取得できません');const blob=await r.blob(),url=URL.createObjectURL(blob);const el=document.createElement(asset.mime.startsWith('image/')?'img':'a');if(el.tagName==='IMG'){el.src=url;el.alt=asset.name;el.className=asset.kind==='generated'?'generated-image':'attachment-image';const link=document.createElement('a');link.href=url;link.download=asset.name;link.textContent='画像を保存';holder.replaceChildren(el,link);return;}else{el.href=url;el.download=asset.name;el.textContent='↓ '+asset.name;el.addEventListener('click',()=>setTimeout(()=>URL.revokeObjectURL(url),1000),{once:true});}holder.replaceChildren(el);}catch{holder.textContent='ファイルを読み込めませんでした';}
 }
 
 let uploading=false;
@@ -96,7 +97,7 @@ $('#fileInput').onchange=safe(async e=>{
  if(files.length+pendingAssets.length>4)throw Error('添付は4件までです。');
  if(files.some(f=>!['image/png','image/jpeg','image/webp','application/pdf'].includes(f.type)))throw Error('PNG・JPEG・WebP・PDFに対応しています。');
  if(files.reduce((n,f)=>n+f.size,0)+pendingAssets.reduce((n,f)=>n+f.size,0)>10*1024*1024)throw Error('添付は合計10MBまでです。');
- uploading=true;setBusy(true);notice('ファイルを保存しています…');
+ uploading=true;setBusy(true);notice();
  try{
  if(!current){current=(await api('/chats','POST',{})).id;await refresh();}
  for(const f of files){const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('ファイルを読めませんでした'));r.readAsDataURL(f);});const result=await api('/chats/'+current+'/uploads','POST',{name:f.name,data});pendingAssets.push(result.asset);renderPending();}
@@ -110,11 +111,15 @@ async function generateImage(){
  setBusy(true);notice();$('#toolStatus').hidden=false;$('#toolStatus').textContent='画像を生成しています…';
  try{
  if(!current){current=(await api('/chats','POST',{})).id;await api('/chats/'+current,'PATCH',{title:prompt.slice(0,40)});}
- await api('/images','POST',{prompt,chatId:current});$('#prompt').value='';
+ const job=await api('/images','POST',{prompt,chatId:current});
+ if(job.id){localStorage.setItem('somenai-image-job',job.id);await waitForImage(job.id);localStorage.removeItem('somenai-image-job');}
+ $('#prompt').value='';
  conversation=(await api('/chats/'+current)).messages;await refresh();await refreshUsage();
  }catch(e){notice(e.message);}
  finally{$('#toolStatus').hidden=true;setBusy(false);render();}
 }
+async function waitForImage(id){for(let attempt=0;attempt<85;attempt++){await new Promise(r=>setTimeout(r,2000));let job;try{job=await api('/images/'+id);}catch(e){if(attempt<5)continue;throw e;}if(job.status==='done')return;if(job.status==='failed'){localStorage.removeItem('somenai-image-job');throw Error(job.error||'画像を生成できませんでした。');}}throw Error('画像生成の確認が時間切れになりました。更新後に会話を確認してください。');}
+async function resumeImageJob(){const id=localStorage.getItem('somenai-image-job');if(!id||busy)return;try{const job=await api('/images/'+id);if(job.status==='running'){notice('画像を生成しています…');await waitForImage(id);}else if(job.status==='failed')throw Error(job.error||'画像を生成できませんでした。');localStorage.removeItem('somenai-image-job');await refresh();await refreshUsage();if(current===job.chatId){conversation=(await api('/chats/'+job.chatId)).messages;render();}notice();}catch(e){localStorage.removeItem('somenai-image-job');notice(e.message);}}
 $('#attachButton').onclick=()=>$('#fileInput').click();
 function applyAppearance(v){
  document.body.classList.toggle('dark',v.theme==='dark');document.body.dataset.accent=['ink','blue','mint','violet','coral'].includes(v.accent)?v.accent:'ink';document.body.dataset.composer=['auto','blue','mint','violet','coral'].includes(v.composer)?v.composer:'auto';
