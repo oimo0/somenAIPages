@@ -37,3 +37,22 @@ body:not(.dark) .orb{display:none}
 #toolStatus.search-wave .search-letter:nth-child(4){animation-delay:.26s}
 @keyframes search-wave{0%,60%,100%{transform:translateY(0);opacity:.65}30%{transform:translateY(-4px);opacity:1}}
 @media(prefers-reduced-motion:reduce){#toolStatus.search-wave .search-letter{animation:none;opacity:1}}
+
+/* A compact, expandable list of citations for each answer. */
+.sources{margin-top:18px;max-width:100%;border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow:hidden}
+.sources>summary{display:flex;align-items:center;gap:8px;min-height:43px;padding:9px 13px;list-style:none;cursor:pointer;color:var(--text);font-size:12px;font-weight:650;user-select:none}
+.sources>summary::-webkit-details-marker{display:none}
+.sources>summary:hover{background:var(--soft)}
+.sources>summary:focus-visible,.source-card:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sources>summary small{font-size:11px;font-weight:500;color:var(--muted)}
+.source-caret{margin-left:auto;color:var(--muted);font-size:17px;line-height:1;transition:transform .2s ease}
+.sources[open] .source-caret{transform:rotate(180deg)}
+.sources .source-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0;overflow:visible;border-top:1px solid var(--line)}
+.sources .source-card{display:flex;align-items:center;gap:14px;min-width:0;min-height:60px;padding:11px 14px;border:0;border-radius:0;text-decoration:none;color:var(--text);font-size:12px}
+.sources .source-card+.source-card{border-top:1px solid var(--line)}
+.sources .source-card:hover{background:var(--soft)}
+.source-copy{display:block;min-width:0;flex:1}
+.source-copy strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;line-height:1.45;font-size:12px;font-weight:600}
+.source-copy small{display:block;margin-top:3px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px}
+.source-arrow{flex:none;color:var(--muted);font-size:15px}
+@media(prefers-reduced-motion:reduce){.source-caret{transition:none}}
