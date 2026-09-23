@@ -13,7 +13,7 @@ async function refreshUsage(){usageState=await api('/usage');renderUsage();}
 function renderSidebarUsage(){
  const wrap=$('#sidebarUsage');wrap.replaceChildren();const title=document.createElement('p');title.textContent='今日の残り回数';const total=document.createElement('strong');const all=['low','normal','high'].map(k=>usageState.items[k]);total.textContent=all.reduce((n,v)=>n+v.remaining,0)+' / '+all.reduce((n,v)=>n+v.limit,0)+'回';total.className='usage-total';wrap.append(title,total);
  for(const k of ['low','normal','high']){
- const v=usageState.items[k],row=document.createElement('div');row.className='usage-row '+k;const label=document.createElement('span');label.textContent=qualityInfo[k].label;const value=document.createElement('b');value.textContent=v.remaining+' / '+v.limit;const bar=document.createElement('div');bar.className='usage-meter';bar.setAttribute('role','progressbar');bar.setAttribute('aria-label',qualityInfo[k].label+'の残り回数');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(v.limit));bar.setAttribute('aria-valuenow',String(v.remaining));const fill=document.createElement('span');fill.className='usage-meter-fill';fill.style.width=Math.max(0,Math.min(100,(v.remaining/(v.limit||1))*100))+'%';bar.append(fill);row.append(label,value,bar);wrap.append(row);
+ const v=usageState.items[k],row=document.createElement('div');row.className='usage-row '+k;const label=document.createElement('span');label.textContent=qualityInfo[k].label;const value=document.createElement('b');value.textContent=v.remaining+' / '+v.limit;row.append(label,value);wrap.append(row);
  }const reset=document.createElement('small');reset.textContent='毎日 0:00 にリセット';wrap.append(reset);
 }
 
