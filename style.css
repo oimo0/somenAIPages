@@ -22,22 +22,10 @@ body:not(.dark) .orb{display:none}
 .usage-total{display:block;font-size:18px;letter-spacing:-.5px;margin:-6px 0 10px;font-variant-numeric:tabular-nums}
 .generating #stop{position:relative}.generating #stop::after{content:"";position:absolute;inset:-4px;border:2px solid transparent;border-top-color:var(--compose);border-radius:50%;animation:generate-spin 1s linear infinite}@keyframes generate-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.generating #stop::after{animation:none}}
 
-/* Compact usage meters: text sits above a separate, rounded track. */
+/* Usage counts without colored meters. */
 #sidebarUsage{padding:14px 10px 14px;border-top:1px solid var(--line)}
 #sidebarUsage>p{margin:0 0 4px;font-size:12px;letter-spacing:.02em}
-#sidebarUsage .usage-total{display:block;margin:0 0 15px;font-size:18px;line-height:1.3;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-#sidebarUsage .usage-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;row-gap:7px;margin:0 0 14px;font-size:12px;line-height:1.2;color:var(--text)}
-#sidebarUsage .usage-row b{font-size:11px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
-#sidebarUsage .usage-meter{grid-column:1 / -1;position:relative;display:block;width:100%;height:9px;min-height:9px;overflow:hidden;border-radius:999px;background:#e9edf2;box-shadow:inset 0 1px 2px #0d22330a}
-#sidebarUsage .usage-meter-fill{display:block;height:100%;border-radius:inherit;background:var(--meter);transition:width .35s ease}
-#sidebarUsage .usage-row.low{--meter:#299a70}
-#sidebarUsage .usage-row.normal{--meter:#447bd8}
-#sidebarUsage .usage-row.high{--meter:#9561bf}
-#sidebarUsage>small{display:block;margin-top:2px;font-size:11px}
-.dark #sidebarUsage .usage-meter{background:#343943}
-@media(max-height:650px){#sidebarUsage .usage-row{margin-bottom:9px;row-gap:4px}}
-
-/* Labels are plain text; only the meter fill carries the tier color. */
-#sidebarUsage .usage-row,#sidebarUsage .usage-row>span:not(.usage-meter-fill),#sidebarUsage .usage-row>b{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
-#sidebarUsage .usage-row>span:not(.usage-meter-fill),#sidebarUsage .usage-row>b{color:var(--text)}
-#sidebarUsage .usage-row>b{color:var(--muted)}
+#sidebarUsage .usage-total{display:block;margin:0 0 14px;font-size:18px;line-height:1.3;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+#sidebarUsage .usage-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin:0 0 11px;font-size:12px;line-height:1.3;color:var(--text)}
+#sidebarUsage .usage-row b{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+#sidebarUsage>small{display:block;margin-top:3px;font-size:11px}
