@@ -56,3 +56,11 @@ body:not(.dark) .orb{display:none}
 .source-copy small{display:block;margin-top:3px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px}
 .source-arrow{flex:none;color:var(--muted);font-size:15px}
 @media(prefers-reduced-motion:reduce){.source-caret{transition:none}}
+
+/* Kuup AI identity: preserve the supplied artwork on both themes. */
+.wordmark,.dark .wordmark{filter:none;mix-blend-mode:normal}
+.side-wordmark{width:168px;margin:-4px 0 -1px}
+.hero-wordmark{width:min(370px,76vw);margin:0 auto 7px}
+.header-mark{display:block;width:24px;height:24px;object-fit:contain;border-radius:6px}
+.mini-logo,.hero-mark.mini{background:#fff url('./kuup-mark.jpg') center / contain no-repeat;color:transparent}
+@media(max-width:480px){.hero-wordmark{width:min(330px,76vw)}}

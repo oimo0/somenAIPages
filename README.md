@@ -1,6 +1,6 @@
-# somenAIPages
+# Kuup AI (frontend)
 
-`somenAI powered by ASRO` の画面UIです。GitHub Pagesで配信し、AI処理・認証・履歴保存は自宅サーバー上の [`somenAI`](https://github.com/oimo0/somenAI) APIへHTTPSで接続します。
+`Kuup AI powered by ASRO` の画面UIです。GitHub Pagesで配信し、AI処理・認証・履歴保存は自宅サーバー上の [`somenAI`](https://github.com/oimo0/somenAI) APIへHTTPSで接続します。
 
 ## GitHub Pages
 
