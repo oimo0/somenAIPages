@@ -18,15 +18,25 @@ function tableNode(lines){
  wrap.className='table-wrap';
  const table=document.createElement('table');
  table.setAttribute('role','table');
- lines.filter((_,i)=>i!==1).forEach((line,i)=>{
+ const rows=lines.filter((_,i)=>i!==1).map((line,i)=>{
   const tr=document.createElement('tr');
   line.replace(/^\||\|$/g,'').split('|').forEach(cell=>{
    const el=document.createElement(i?'td':'th');
    inline(el,cell.trim());
    tr.append(el);
   });
+  return tr;
+ });
+ const headers=rows[0] ? [...rows[0].children].map(el=>el.textContent.trim()) : [];
+ rows.forEach((tr,i)=>{
+  [...tr.children].forEach((el,j)=>{
+   if(i>0 && el.tagName==='TD')el.dataset.label=headers[j]||'項目';
+  });
   table.append(tr);
  });
+ if(rows[0]){
+  rows[0].classList.add('table-header-row');
+ }
  wrap.append(table);
  return wrap;
 }
