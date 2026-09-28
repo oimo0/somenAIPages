@@ -48,7 +48,7 @@ function authScreen(signup){
 }
 async function acceptInvite(value){
  if(verifyingInvite)return;const url=new URL(value,location.href);
- if(url.origin!==location.origin||url.pathname!==location.pathname)throw Error('Kuup AIの招待QRを読み取ってください。');
+ const sameOrigin=url.origin===location.origin;const samePath=url.pathname.replace(/\/+$/,'')===location.pathname.replace(/\/+$/,'');if(!sameOrigin||!samePath)throw Error('Kuup AIの招待QRを読み取ってください。');
  const token=new URLSearchParams(url.hash.slice(1)).get('invite');if(!token)throw Error('招待QRが見つかりません。');
  verifyingInvite=true;stopScanner();$('#qrStatus').textContent='招待を確認しています…';
  try{const r=await api('/invites/verify','POST',{token});registrationGrant=r.grant;grantExpiry=r.expires;authScreen(true);if(!$('#auth').open)$('#auth').showModal();$('#name').focus();}
