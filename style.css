@@ -75,3 +75,4 @@ body:not(.dark) .orb{display:none}
 .header-mark{display:block;width:24px;height:24px;object-fit:contain;border-radius:6px}
 .mini-logo,.hero-mark.mini{background:#fff url('./kuup-mark.jpg') center / contain no-repeat;color:transparent}
 @media(max-width:480px){.hero-wordmark{width:min(330px,76vw)}}
+.content .katex{font-size:1.05em}.content .katex-display{margin:1em 0;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.25em 0;-webkit-overflow-scrolling:touch}.content .katex-display>.katex{white-space:normal}.content .katex-error{color:inherit}
