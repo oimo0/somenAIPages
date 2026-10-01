@@ -2,6 +2,8 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const API_BASE=(window.SOMENAI_API_BASE||'').replace(/\/$/,'');
 let authToken=localStorage.getItem('somenai-token')||'',chats=[],current=null,conversation=[],busy=false,register=false,config,usageState,settings={studyMode:0,webMode:'auto'},quality=['low','normal','high','image'].includes(localStorage.getItem('somenai-quality'))?localStorage.getItem('somenai-quality'):'normal',imageMode=false;
 const qualityInfo={low:{label:'低',model:'Llama',color:'green'},normal:{label:'中',model:'Qwen',color:'blue'},high:{label:'高',color:'purple'},image:{label:'画像生成',color:'orange'}};
+const DEFAULT_LEGAL_VERSION='2026-10-01';
+const currentLegalVersion=()=>config?.legal?.version||DEFAULT_LEGAL_VERSION;
 const notice=s=>$('#notice').textContent=s||'';
 async function api(path,method='GET',data){const headers={};if(data)headers['Content-Type']='application/json';if(authToken)headers.Authorization='Bearer '+authToken;let res;try{res=await fetch(API_BASE+'/api'+path,{method,headers,body:data?JSON.stringify(data):undefined});}catch{throw new Error('Kuup AIサーバーに接続できません。');}let value={};try{value=await res.json();}catch{}if(!res.ok){if(res.status===401&&!['/login','/register'].includes(path)){authToken='';localStorage.removeItem('somenai-token');if(!$('#auth').open)$('#auth').showModal();}throw new Error(value.error||`通信エラー（${res.status}）`);}return value;}
 const safe=fn=>(...args)=>{try{return Promise.resolve(fn(...args)).catch(e=>notice(e.message));}catch(e){notice(e.message);}};
@@ -81,7 +83,12 @@ $('#saveInvite').onclick=()=>{if(!issuedInviteSvg)return;const url=URL.createObj
 $('#usageButton').onclick=()=>$('#settingsOpen').click();$('#settingsClose').onclick=()=>$('#settingsDialog').close();$('#studyMode').onchange=safe(async e=>{settings=await api('/settings','PATCH',{studyMode:e.target.checked});});$$('[data-web]').forEach(b=>b.onclick=safe(async()=>{settings=await api('/settings','PATCH',{webMode:b.dataset.web});$$('[data-web]').forEach(x=>x.classList.toggle('active',x.dataset.web===settings.webMode));}));
 $$('[data-prompt]').forEach(b=>b.onclick=()=>{$('#prompt').value=b.dataset.prompt;$('#prompt').focus();});
 $('#rename').onclick=()=>openRename(current);$('#editCancel').onclick=()=>$('#editDialog').close();$('#editForm').onsubmit=safe(async e=>{e.preventDefault();await api('/chats/'+actionChatId,'PATCH',{title:$('#editTitle').value});$('#editDialog').close();await refresh();});$('#delete').onclick=()=>openDelete(current);$('#deleteCancel').onclick=()=>$('#deleteDialog').close();$('#deleteConfirm').onclick=safe(async()=>{const id=actionChatId;await api('/chats/'+id,'DELETE');$('#deleteDialog').close();if(current===id)newChat();await refresh();});$('#export').onclick=()=>{const title=chats.find(c=>c.id===current)?.title||'chat';const blob=new Blob([`# ${title}\n\n`+conversation.map(m=>`## ${m.role==='user'?'あなた':'Kuup AI'}\n\n${m.content}`).join('\n\n')],{type:'text/markdown;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=title.replace(/[^\p{L}\p{N}_-]/gu,'_').slice(0,50)+'.md';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
-$('#logout').onclick=safe(async()=>{await api('/logout','POST',{});stopScanner();authScreen(false);usageState=null;authToken='';localStorage.removeItem('somenai-token');localStorage.removeItem('somenai-image-job');current=null;chats=[];conversation=[];render();renderHistory();$('#username').textContent='ゲスト';$('#auth').showModal();});
+async function logoutSession(){try{if(authToken)await api('/logout','POST',{});}catch{}stopScanner();authScreen(false);usageState=null;authToken='';localStorage.removeItem('somenai-token');localStorage.removeItem('somenai-image-job');current=null;chats=[];conversation=[];render();renderHistory();$('#username').textContent='ゲスト';if($('#legalDialog').open)$('#legalDialog').close();if(!$('#auth').open)$('#auth').showModal();}
+$('#logout').onclick=safe(logoutSession);
+$('#legalDialog').addEventListener('cancel',e=>e.preventDefault());
+$('#legalConsentCheck').onchange=e=>{$('#legalAccept').disabled=!e.target.checked;$('#legalError').textContent='';};
+$('#legalAccept').onclick=safe(async()=>{if(!$('#legalConsentCheck').checked){$('#legalError').textContent='内容を確認して同意してください。';return;}$('#legalAccept').disabled=true;try{await api('/legal-consent','POST',{accepted:true,version:currentLegalVersion()});$('#legalDialog').close();await loadUser();}catch(e){$('#legalError').textContent=e.message;$('#legalAccept').disabled=false;}});
+$('#legalLogout').onclick=safe(logoutSession);
 let registrationGrant='',grantExpiry=0,cameraStream=null,scanFrame=0,scanGeneration=0,verifyingInvite=false;
 function stopScanner(){scanGeneration++;cancelAnimationFrame(scanFrame);cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;$('#qrVideo').srcObject=null;}
 function authScreen(signup){
@@ -89,6 +96,7 @@ function authScreen(signup){
  $('#authTitle').textContent=register?(allowed?'アカウントを作成':'招待QRを読み取る'):'Kuup AIへログイン';
  $('#authDescription').textContent=register?(allowed?'招待認証が完了しました。名前とパスワードを設定してください。':'新規登録には管理者からの招待が必要です。'):'名前とパスワードでログインします。';
  $('#accountFields').hidden=!!(register&&!allowed);$('#name').disabled=$('#password').disabled=!!(register&&!allowed);
+ $('#registrationConsent').hidden=!(register&&allowed);$('#registerLegalConsent').required=!!(register&&allowed);
  $('#authSubmit').hidden=!!(register&&!allowed);$('#authSubmit').textContent=register?'登録する':'ログイン';$('#qrGate').hidden=!register||!!allowed;
  $('#authToggle').textContent=register?'ログインに戻る':'新規登録';$('#authError').textContent='';$('#password').autocomplete=register?'new-password':'current-password';
 }
@@ -120,12 +128,13 @@ $('#qrFile').onchange=async e=>{
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScanner();});
 $('#authForm').onsubmit=async e=>{
- e.preventDefault();$('#authError').textContent='';if(register&&(!registrationGrant||grantExpiry<=Date.now())){registrationGrant='';authScreen(true);return;}
+ e.preventDefault();$('#authError').textContent='';if(register&&(!registrationGrant||grantExpiry<=Date.now())){registrationGrant='';authScreen(true);return;}if(register&&!$('#registerLegalConsent').checked){$('#authError').textContent='プライバシーポリシーと利用規約への同意が必要です。';return;}
  $('#authSubmit').disabled=true;
- try{const u=await api(register?'/register':'/login','POST',{name:$('#name').value,password:$('#password').value,grant:registrationGrant});authToken=u.token;localStorage.setItem('somenai-token',authToken);registrationGrant='';stopScanner();$('#auth').close();$('#password').value='';authScreen(false);await loadUser();}
+ try{const u=await api(register?'/register':'/login','POST',{name:$('#name').value,password:$('#password').value,grant:registrationGrant,legalAccepted:register?true:undefined,legalVersion:register?currentLegalVersion():undefined});authToken=u.token;localStorage.setItem('somenai-token',authToken);registrationGrant='';$('#registerLegalConsent').checked=false;stopScanner();$('#auth').close();$('#password').value='';authScreen(false);await loadUser();}
  catch(e){$('#authError').textContent=e.message;}finally{$('#authSubmit').disabled=false;}
 };
-async function loadUser(){const [u,c,s,use]=await Promise.all([api('/me'),api('/chats'),api('/settings'),api('/usage')]);chats=c;settings=s;applyAppearance(s.appearance||{});usageState=use;$('#username').textContent=u.name;$('#avatar').textContent=u.name.slice(0,1).toUpperCase();renderHistory();renderUsage();void resumeImageJob();}
+function showLegalDialog(){if($('#legalDialog').open)return;$('#legalConsentCheck').checked=false;$('#legalAccept').disabled=true;$('#legalError').textContent='';$('#legalDialog').showModal();}
+async function loadUser(){const u=await api('/me');$('#username').textContent=u.name;$('#avatar').textContent=u.name.slice(0,1).toUpperCase();if(u.needsLegalConsent){showLegalDialog();return;}const [c,prefs,use]=await Promise.all([api('/chats'),api('/settings'),api('/usage')]);chats=c;settings=prefs;applyAppearance(prefs.appearance||{});usageState=use;renderHistory();renderUsage();void resumeImageJob();}
 async function init(){updateModel();try{if(!API_BASE.startsWith('https://'))throw new Error('API接続先をconfig.jsに設定してください。');config=await api('/config');$('#authToggle').hidden=!config.registration;const tools=[['🔎 Web検索',config.tools.web],['🏫 SchoolLink',config.tools.schoolLink],['🎨 画像生成',config.tools.image],['🧮 計算','ready']];$('#toolReadiness').replaceChildren(...tools.map(([name,ready])=>{const d=document.createElement('div');d.className='tool-item';const a=document.createElement('span'),b=document.createElement('span');a.textContent=name;b.className=ready?'ready':'pending';b.textContent=ready?'利用可能':'未設定';d.append(a,b);return d;}));const inviteURL=location.href;if(new URLSearchParams(location.hash.slice(1)).has('invite')){history.replaceState(null,'',location.pathname+location.search);authScreen(true);$('#auth').showModal();try{await acceptInvite(inviteURL);}catch(e){$('#qrStatus').textContent=e.message;}render();return;}if(authToken){try{await loadUser();}catch{if(!$('#auth').open)$('#auth').showModal();}}else $('#auth').showModal();render();}catch(e){notice(e.message);}}
 
 let pendingAssets=[];
